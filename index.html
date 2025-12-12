@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="zh-CN" class="mdui-theme-auto">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no"/>
+        <meta name="renderer" content="webkit"/>
+        <meta name="description" content="使用拟合定数，计算你「真实的」DX Rating">
+        <meta name="keywords" content="舞萌DX, maimai DX, rating, rhythm games, 音游, tool, 工具">
+        <meta name="author" content="0x24a">
+
+        <link rel="stylesheet" href="https://unpkg.com/mdui@2/mdui.css">
+        <script src="https://unpkg.com/mdui@2/mdui.global.js"></script>
+        <link
+          href="https://fonts.googleapis.com/icon?family=Material+Icons"
+          rel="stylesheet"
+        />
+        <style>
+    .ratings {
+      width: 80%;
+      max-width: 80%;
+      border-collapse: collapse;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+        Arial, sans-serif;
+      font-size: 0.9rem;
+      text-align: left;
+      box-shadow: inset 0 0 0 0.0625rem rgb(var(--mdui-color-outline));
+      border-radius: var(--mdui-shape-corner-small);
+      overflow: hidden;
+    }
+    
+    .ratings th,
+    .ratings td {
+      padding: 0.75rem 1rem;
+      border: 0.0625rem solid rgb(var(--mdui-color-outline));
+    }
+    
+    .ratings th {
+      font-weight: 600;
+      background-color: rgb(var(--mdui-color-surface-container));
+    }
+    
+    #username {
+      max-width: 50%;
+    }
+    
+    #progress{
+        max-width: 50%;
+        margin-left: 25%; 
+    }
+    
+    @media (max-width: 768px) {
+      .ratings {
+        font-size: xx-small;
+        width: 95%;
+        max-width: 95%;
+      }
+      .ratings th,
+      .ratings td {
+          padding: 0.25rem 0.5rem;
+      }
+      #username {
+          max-width: 75%;
+      }
+      #progress{
+          max-width: 75%;
+          margin-left: 12.5%; 
+      }
+    }
+    
+
+    @keyframes fadeOutUp {
+      from {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    </style>
+
+    <title>舞萌DX拟合Rating计算器</title>
+  </head>
+  <body>
+      <mdui-top-app-bar>
+        <mdui-button-icon icon="calculate"></mdui-button-icon> <!--just a placeholder-->
+        <mdui-top-app-bar-title>舞萌DX | 拟合 Rating 计算器</mdui-top-app-bar-title>
+        <div style="flex-grow: 1"></div>
+        <mdui-tooltip placement="bottom-left" content="关于应用" id="about-app">
+            <mdui-button-icon icon="help_outline"></mdui-button-icon>
+        </mdui-tooltip>
+      </mdui-top-app-bar>
+      <div class="start_screen">
+        <br><br>
+        <center>
+            <p style="font-size: x-large;">输入你的水鱼查分器用户名</p>
+            <br>
+            <mdui-text-field variant="outlined" label="用户名" id="username"></mdui-text-field>
+            <br>
+            <br>
+            <br>
+            <mdui-button id="start">Magic ☆ Start!</mdui-button>
+            <br>
+            <br>
+        </center>
+            <mdui-linear-progress value="0" id="progress" style="display: none;"></mdui-linear-progress>
+      </div>
+      <center>
+          <div class="start_screen">
+            <br>
+            <p id="description" style="display: none;">进度文本</p>
+          </div>
+          <div id="results" style="display: none;">
+          <br>
+          <br>
+          <p style="font-size: xx-large;" id="username_textbox">用户名</p>
+          <br>
+          <p>您的拟合 Rating 为：<b id="fitra"></b>（<span id="fitra_diff"></span>）</p>
+          <br>
+          <br>
+          <table class="ratings">
+              <thead>
+                  <tr>
+                      <th>乐曲名</th>
+                      <th>达成率</th>
+                      <th>定数</th>
+                      <th>Rating</th>
+                      <th>拟合定数</th>
+                      <th>拟合Rating</th>
+                      <th>变化</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  <tr id="b35">
+                      <td colspan="7" style="text-align: center;"><b>旧曲 | BEST 35 | 可靠性: <span id="b35_conf"></span>% | <span id="b35_fitra_diff"></span></b></td>
+                  </tr>
+                  <tr id="b15">
+                      <td colspan="7" style="text-align: center;"><b>新曲 | BEST 15 | 可靠性：<span id="b15_conf"></span>% | <span id="b15_fitra_diff"></span></b></td>
+                  </tr>
+              </tbody>
+          </table>
+          </div>
+      </center>
+      <mdui-dialog id="about-dialog" headline="关于应用" close-on-overlay-click close-on-esc>
+MaimaiFittedRatingCalculator v0.1 By 0x24a<br>
+被 MilkBot 的拟合 Rating 算法搞红温之后做出的作品<br>
+<br>
+我不会写前端，代码非常大份，看到源代码请不要骂我
+<br>
+<br>
+此工具算法：<br>
+取玩家 Best 50 中的每一首乐曲的达成率，按照该乐曲的拟合定数计算出单曲的拟合 Rating<br>
+求和即得玩家拟合 Rating<br>
+<br>
+致谢：<br>
+<br>
+水鱼查分器<br>
+https://www.diving-fish.com/maimaidx/prober/<br>
+重要的数据来源<br>
+<br>
+maimai DX Rating Lookup Table & Visualization<br>
+https://myjian.github.io/mai-tools/rating-visualizer/<br>
+单曲 Rating 算法<br>
+<br>
+MilkBot<br>
+提供创作动机<br>
+<br>
+Copyright 2025 0x24a<br>
+https://github.com/0x24a/<br>
+Deployed on Cloudflare Pages with Cloudflare Web Analytics<br>
+点击框外任何位置或按下 ESC 键以退出
+      </mdui-dialog>
+      <script>
+      // copied from https://myjian.github.io/mai-tools/rating-visualizer/, thank u
+      const t = {};
+      t.RANK_S = {
+        minAchv: 97,
+        factor: 0.2,
+        title: "S",
+      };
+      t.RANK_SSS_PLUS = {
+        minAchv: 100.5,
+        factor: 0.224,
+        title: "SSS+",
+      };
+      
+      const l = [
+        t.RANK_SSS_PLUS,
+        {
+          minAchv: 100,
+          factor: 0.216,
+          title: "SSS",
+          maxAchv: 100.4999,
+          maxFactor: 0.222,
+        },
+        {
+          minAchv: 99.5,
+          factor: 0.211,
+          title: "SS+",
+          maxAchv: 99.9999,
+          maxFactor: 0.214,
+        },
+        {
+          minAchv: 99,
+          factor: 0.208,
+          title: "SS",
+        },
+        {
+          minAchv: 98,
+          factor: 0.203,
+          title: "S+",
+          maxAchv: 98.9999,
+          maxFactor: 0.206,
+        },
+        t.RANK_S,
+        {
+          minAchv: 94,
+          factor: 0.168,
+          title: "AAA",
+          maxAchv: 96.9999,
+          maxFactor: 0.176,
+        },
+        {
+          minAchv: 90,
+          factor: 0.152,
+          title: "AA",
+        },
+        {
+          minAchv: 80,
+          factor: 0.136,
+          title: "A",
+        },
+        {
+          minAchv: 75,
+          factor: 0.12,
+          title: "BBB",
+          maxAchv: 79.9999,
+          maxFactor: 0.128,
+        },
+        {
+          minAchv: 70,
+          factor: 0.112,
+          title: "BB",
+        },
+        {
+          minAchv: 60,
+          factor: 0.096,
+          title: "B",
+        },
+        {
+          minAchv: 50,
+          factor: 0.08,
+          title: "C",
+        },
+        {
+          minAchv: 0,
+          factor: 0.016,
+          title: "D",
+        },
+      ];
+      
+        mdui.setColorScheme("#39c5bb");
+        function $(id) {
+          return document.getElementById(id);
+        }
+        function sleep(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        function getRatingByDiffAndAccuracy(diff, accuracy) {
+          const rank = l.find(r => accuracy >= r.minAchv);
+          if (!rank) {
+            return 0;
+          }
+          const factor = rank.factor;
+          const rating = accuracy * diff * factor;
+          return Math.floor(rating);
+        }
+        $("about-app").onclick = async function() {
+          $("about-dialog").open = true;
+        }
+        $("start").onclick = async function() {
+          if ($("username").value === "") {
+            mdui.alert({
+              headline: "请输入文本",
+              description: "用户名怎么是慈祥的老奶奶？",
+              confirmText: "我错了"
+            })
+            return;
+          }
+          $("start").setAttribute("disabled", "disabled");
+          $("start").setAttribute("loading", "loading");
+          $("username").setAttribute("disabled", "disabled");
+          $("progress").setAttribute("value", "0.1");
+          $("description").style.display = "block";
+          $("progress").style.display = "block";
+          $("description").textContent = "Step 1/4 | 下载玩家数据";
+          try{
+            var player_data = await fetch(
+              "https://www.diving-fish.com/api/maimaidxprober/query/player",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  b50: true,
+                  username: $("username").value
+                })
+              }
+            ).then(res => res.json());
+          }catch(e){
+            mdui.alert({
+              headline: "网络错误",
+              description: "无法连接到 水鱼查分器 服务器。",
+              confirmText: "好"
+            });
+            $("start").removeAttribute("disabled");
+            $("start").removeAttribute("loading");
+            $("username").removeAttribute("disabled");
+            $("progress").setAttribute("value", "0");
+            $("description").style.display = "none";
+            $("progress").style.display = "none";
+            return;
+          }
+          if (player_data.username != $("username").value){
+            mdui.alert({
+              headline: "用户名错误",
+              description: "用户名不匹配。极大可能是用户不存在、未允许其他人查看分数或是未知的错误。请检查用户名的输入。",
+              confirmText: "好"
+            });
+            $("start").removeAttribute("disabled");
+            $("username").removeAttribute("disabled");
+            $("start").removeAttribute("loading");
+            $("progress").setAttribute("value", "0");
+            $("description").style.display = "none";
+            $("progress").style.display = "none";
+            return;
+          };
+          $("progress").value = 0.2;
+          $("description").innerText = `Step 1/4 OK | ${player_data.username} (${player_data.rating})`;
+          await sleep(1000);
+          $("progress").value = 0.3;
+          $("description").innerText = `Step 2/4 | 下载拟合定数数据`;
+          try{
+            var fitdiff_data = await fetch(`https://www.diving-fish.com/api/maimaidxprober/chart_stats`).then(res => res.json());
+          }catch(e){
+            mdui.alert({
+              headline: "网络错误",
+              description: "无法下载拟合定数数据。",
+              confirmText: "好"
+            });
+            $("start").removeAttribute("disabled");
+            $("username").removeAttribute("disabled");
+            $("start").removeAttribute("loading");
+            $("progress").setAttribute("value", "0");
+            $("description").style.display = "none";
+            $("progress").style.display = "none";
+            return;
+          }
+          $("description").innerText = `Step 2/4 OK | 获得了 ${Object.keys(fitdiff_data.charts).length} 首乐曲的拟合定数`;
+          $("progress").value = 0.7;
+          await sleep(1000);
+          $("description").innerText = `Step 3/4 | 计算拟合 Rating`;
+          $("progress").value = 0.7;
+          var b15_data = [];
+          var b15_fit = 0;
+          var b15_found = 0;
+          var b15_ra = 0;
+          var b35_data = [];
+          var b35_fit = 0;
+          var b35_found = 0;
+          var b35_ra = 0;
+          player_data.charts.dx.forEach(chart => {
+            var song_data = [];
+            song_data.push(chart.title);
+            song_data.push(chart.achievements.toString()+"%");
+            song_data.push(chart.ds);
+            song_data.push(chart.ra)
+            if(fitdiff_data.charts[chart.song_id] === undefined || fitdiff_data.charts[chart.song_id][chart.level_index].fit_diff === undefined){
+              song_data.push("-");
+              song_data.push("-");
+              song_data.push("-");
+              b15_fit += chart.ra;
+            }else{
+              b15_found++;
+              let fitdiff = fitdiff_data.charts[chart.song_id][chart.level_index].fit_diff;
+              song_data.push(Math.round(fitdiff * 100) / 100);
+              let fitra = getRatingByDiffAndAccuracy(fitdiff, chart.achievements);
+              song_data.push(fitra);
+              b15_fit += fitra;
+              if (fitra>chart.ra){
+                song_data.push(`+${fitra-chart.ra}`);
+              }else if(fitra<chart.ra){
+                song_data.push(`-${chart.ra-fitra}`);
+              }else{
+                song_data.push("0");
+              }
+            }
+            b15_ra += chart.ra;
+            b15_data.push(song_data);
+          });
+          player_data.charts.sd.forEach(chart => {
+            var song_data = [];
+            song_data.push(chart.title);
+            song_data.push(chart.achievements.toString()+"%");
+            song_data.push(chart.ds);
+            song_data.push(chart.ra);
+            if(fitdiff_data.charts[chart.song_id] === undefined || fitdiff_data.charts[chart.song_id][chart.level_index].fit_diff === undefined){
+              song_data.push("-");
+              song_data.push("-");
+              song_data.push("-");
+              b35_fit += chart.ra;
+            }else{
+              b35_found++;
+              let fitdiff = fitdiff_data.charts[chart.song_id][chart.level_index].fit_diff;
+              song_data.push(Math.round(fitdiff * 100) / 100);
+              let fitra = getRatingByDiffAndAccuracy(fitdiff, chart.achievements);
+              song_data.push(fitra);
+              b35_fit += fitra;
+              if (fitra>chart.ra){
+                song_data.push(`+${fitra-chart.ra}`);
+              }else if(fitra<chart.ra){
+                song_data.push(`-${chart.ra-fitra}`);
+              }else{
+                song_data.push("0");
+              }
+            }
+            b35_ra += chart.ra;
+            b35_data.push(song_data);
+          });
+          $("b35_conf").innerText = Math.round((b35_found / 35)*10000)/100;
+          $("b15_conf").innerText = Math.round((b15_found / 15)*10000)/100;
+          b35_data.forEach(song_data => {
+            let tr = document.createElement("tr");
+            song_data.forEach((e)=>{
+              let td = document.createElement("td");
+              td.innerText = e;
+              tr.appendChild(td);
+            })
+            document.getElementById("b35").after(tr);
+          });
+          b15_data.forEach(song_data => {
+            let tr = document.createElement("tr");
+            song_data.forEach((e)=>{
+              let td = document.createElement("td");
+              td.innerText = e;
+              tr.appendChild(td);
+            })
+            document.getElementById("b15").after(tr);
+          });
+          if (b35_fit > b35_ra){
+            $("b35_fitra_diff").innerText = `${b35_ra}+${b35_fit - b35_ra}=${b35_fit}`;
+          }else if(b35_fit < b35_ra){
+            $("b35_fitra_diff").innerText = `${b35_ra}-${b35_ra - b35_fit}=${b35_fit}`;
+          }else{
+            $("b35_fitra_diff").innerText = `${b35_fit}±0 (？？？wtf)`;
+          }
+          if (b15_fit > b15_ra){
+            $("b15_fitra_diff").innerText = `${b15_ra}+${b15_fit - b15_ra}=${b15_fit}`;
+          }else if(b15_fit < b15_ra){
+            $("b15_fitra_diff").innerText = `${b15_ra}-${b15_ra - b15_fit}=${b15_fit}`;
+          }else{
+            $("b15_fitra_diff").innerText = `${b15_fit}±0 (？？？wtf)`;
+          }
+          $("fitra").innerText = `${b35_fit+b15_fit}`;
+          var b50_ra = b35_ra + b15_ra;
+          var b50_fit = b35_fit + b15_fit;
+          if (b50_ra > b50_fit){
+            $("fitra_diff").innerText = `-${b50_ra - b50_fit}`;
+          }else if(b50_fit > b50_ra){
+            $("fitra_diff").innerText = `+${b50_fit - b50_ra}`;
+          }else{
+            $("fitra_diff").innerText = `±0`;
+          }
+          $("username_textbox").innerText = player_data.username;
+          await sleep(500);
+          $("description").innerText = `Step 3/4 OK | 计算完成`;
+          $("progress").value = 0.9;
+          await sleep(500);
+          $("description").innerText = `Step 4/4 OK | 完成`;
+          $("progress").value = 1;
+          await sleep(1000);
+          Array.from(document.getElementsByClassName("start_screen")).forEach((element) => {
+            element.style.animation = "fadeOutUp 1s ease"
+          });
+          await sleep(1000)
+          Array.from(document.getElementsByClassName("start_screen")).forEach((element) => {
+            element.style.display = "none"
+          });
+          $("results").style.display = "block"
+          $("results").style.animation = "fadeInUp 1s ease-out"
+        }
+      </script>
+  </body>
+  
+</html>
