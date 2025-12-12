@@ -33,6 +33,14 @@ Edit `index.html` and open a pull request. This is a side project I made for fun
 - MDUIv2
 - and HTML
 
+## Credits
+
+Creation of this program was made possible by developers like you.
+
+- [Diving-Fish Prober](https://www.diving-fish.com/maimaidx/prober/)
+- [maimai DX Rating Lookup Table & Visualization](https://myjian.github.io/mai-tools/rating-visualizer/)
+- [MilkBot](https://www.milkbot.cn/)
+
 ---
 
 *Made with ❤️ (and probably 3am madness) by 0x24a*
